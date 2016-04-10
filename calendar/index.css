@@ -1,0 +1,51 @@
+// CSS without Flexbox
+.days {
+    width: 320px;
+}
+.day, .date {
+    float: left;
+    position: relative;
+    padding: 10px;
+    border: 2px solid pink;
+    width: 20px;
+    height: 20px;
+}
+.dates {
+    width: 320px;
+}
+
+.blank {
+    background-color: pink;
+}
+
+.today {
+    background-color: lime;
+}
+
+// Flexbox
+.days,
+.dates {
+    display: flex;
+    flex-flow: row wrap;
+    width: 70%;
+    height: 100%;
+    min-width: 320px;
+}
+
+.day,
+.date {
+    padding: 5px 0;
+    border: 2px solid pink;
+    min-width: 20px;
+    min-height: 20px;
+    width: 13%;
+    text-align: center;
+}
+
+.blank {
+    background-color: pink;
+}
+
+.today {
+    background-color: lime;
+}
