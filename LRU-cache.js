@@ -11,6 +11,7 @@
 function LinkedList() {
     this.head = null; // Most recent
     this.tail = null; // Least recent
+    this.length = 0;
 
     this.append = (node) => {
         if (this.head === null) {
@@ -27,6 +28,7 @@ function LinkedList() {
             node.next = oldHeadNode;
             this.head = node;
         }
+        this.length += 1;
     };
 
     this.remove = (node) => {
@@ -42,8 +44,34 @@ function LinkedList() {
         if (this.head.id === node.id) {
             this.head = node.next;
         }
+        this.length -= 1;
         return node;
+    };
+
+    this.getLength = () => {
+        return this.length;
     }
+
+    /* This updates recent-ness for updating an existing id.
+       Takes out existing item. Inserts it into HEAD.
+       Only update when the id you're grabbing isn't already HEAD.
+    */
+    this.moveToTop = (node) => {
+        if (this.head.id !== node.id) {
+            this.append(this.remove(node))
+        }
+    };
+
+    this.print = () => {
+        let recent = []; // make a copy of cache in array form
+        let node = this.head;
+        while (node !== null) {
+            recent.push(node.id);
+            node = node.next;
+        }
+        console.log(recent.join(', '), '<-- cache, from MOST recently used to LEAST recently used');
+    };
+
 }
 function Node(id, val) {
     this.id = id;
@@ -57,27 +85,16 @@ function LRUCache() {
     this.cache = null; // Cache keeps track of recent-ness. Most recent first.
     this.maxSize = 0; // Max size of data store
 
-    /* This updates recent-ness for updating an existing id.
-       Takes out existing item. Inserts it into HEAD of LinkedList.
-       Only update when the id you're grabbing isn't already HEAD.
-    */
-    this.updateRecentExistingId = (id) => {
-        if (this.cache.head.id !== id) {
-            this.cache.append(this.cache.remove(this.lookup[id]))
-        }
-    };
-
     /* Input: id
        Output: val
-       Updates recentness for that id in cache.
     */
     this.get = (id) => {
-        // TODO get a non-existent id
         console.log('\nGetting', id);
-        if (this.lookup[id]) {
-            this.updateRecentExistingId(id);
-            console.log(this.lookup[id].val);
-            return this.lookup[id].val;
+        let node = this.lookup[id];
+        if (node) {
+            this.cache.moveToTop(node);
+            console.log(node.val);
+            return node.val;
         }
         console.log('ID did not exist');
         return 'ID did not exist';
@@ -85,27 +102,27 @@ function LRUCache() {
 
     /* Input: id and val
        Output: none
-       Updates recentness in cache.
        If id is not in the list and the list is full, deletes
        the least recently used id and then adds this one.
     */
     this.set = (id, val) => {
         console.log('\nSetting', id, ',' , val);
-        if (this.lookup[id]) { // Setting existing id. Size of cache does not change.
-            this.updateRecentExistingId(id);
-            this.lookup[id].val = val;
-            this.cache.head.val = val;
+        let node = this.lookup[id];
+        if (node) { // Setting existing id. Size of cache does not change.
+            node.val = val;
         } else { // Setting new id. Size of cache may change.
-            if (Object.keys(this.lookup).length === this.maxSize) {
+            if (this.cache.getLength() === this.maxSize) {
                 let nodeToDelete = this.cache.tail;
                 this.cache.remove(nodeToDelete);
                 delete(this.lookup[nodeToDelete.id]);
             }
             // Add new Node
-            let newHeadNode = new Node(id, val);
-            this.cache.append(newHeadNode);
-            this.lookup[id] = newHeadNode;
+            node = new Node(id, val); // newHeadNode
+            this.cache.append(node);
+            this.lookup[id] = node;
+            this.cache.moveToTop(node);
         }
+        this.cache.moveToTop(node);
     };
 
     // Deletes exisiting cache and creates a new one with size = maxSize
@@ -116,13 +133,7 @@ function LRUCache() {
     };
 
     this.printCache = () => {
-        let recent = []; // make a copy of cache in array form
-        let node = this.cache.head;
-        while (node !== null) {
-            recent.push(node.id);
-            node = node.next;
-        }
-        console.log(recent.join(', '), '<-- Cache, from MOST recently used to LEAST recently used');
+        this.cache.print();
     };
 };
 
