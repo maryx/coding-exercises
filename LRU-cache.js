@@ -1,54 +1,216 @@
-// #4
 // the good-ol LRU cache problem:
 // implement an LRU cache (least-recently-used).
 // it exposes this API:
 //   get(id), set(id, val), construct(max_items)
 // if we are trying to set a new item when there are already max_items in the cache,
-//  we drop the least-fresh (oldest, or least-recently-used entry) before adding new one.
+// we drop the least-fresh (oldest, or least-recently-used entry) before adding new one.
 // should be as efficient as possible in terms of runtime complexity
 
-var LRUCache = function() {
-    
-    /* Each value is stored as {id, val}.
-     * Most recently used will be in the last place.
-     * Least recently used will be in the first place.
-     */
-    this.cache = [];
-    this.max_size = 0;
+'use strict';
 
-    // Returns val given the id. Then pushes this one to be the most recently used.
-    function get(id) {
-        for (var i = 0; i < this.cache.length; i++) {
-            if (id === this.cache[i][0]) {
-                var val = this.cache[i][1];
-                this.cache.pop(i).push(); // Pops it out of wherever it was previously and makes it most recent
-                return val;
-            }
-        }
-        console.log("id was not found");
-        return null;
-    }
+function LinkedList() {
+    this.head = null; // Most recent
+    this.tail = null; // Least recent
 
-    /* Sets id with value.
-     * If id is not in the list and the list is full, deletes the least recently used id
-     * and then adds this one.
-     */
-    function set(id, val) {
-        if (get(id)) { // the get() causes the item to be the last element in the array
-            this.cache[-1][1] = val;
-        } else {
-            if (this.cache.length >= this.max_size) {
-                this.cache.pop(); // removes the least used
+    this.append = (node) => {
+        if (this.head === null) {
+            this.head = node;
+            this.tail = node;
+            node.prev = null;
+            node.next = null;
+        } else { // Append to head
+            if (this.tail.id === node.id) {
+                this.tail = node.prev;
             }
-            this.cache.push([id, val]); // adds to end of array
+            let oldHeadNode = this.head; // Get previously most recent head
+            oldHeadNode.prev = node;
+            node.next = oldHeadNode;
+            this.head = node;
         }
-    }
-    
-    // Deletes exisiting cache and creates a new one with size = max_items
-    function construct(max_items) {
-        this.cache = [];
-        this.max_size = max_items;
+    };
+
+    this.remove = (node) => {
+        if (node.prev !== null) {
+            node.prev.next = node.next;
+        }
+        if (node.next !== null) {
+            node.next.prev = node.prev;
+        }
+        if (this.tail.id === node.id) {
+            this.tail = node.prev;
+        }
+        if (this.head.id === node.id) {
+            this.head = node.next;
+        }
+        return node;
     }
 }
+function Node(id, val) {
+    this.id = id;
+    this.val = val;
+    this.next = null; // 'less recent'
+    this.prev = null; // 'more recent'
+}
 
-module.exports = LRUCache();
+function LRUCache() {
+    this.lookup = null; // Each value is stored as {id, Node}
+    this.cache = null; // Cache keeps track of recent-ness. Most recent first.
+    this.maxSize = 0; // Max size of data store
+
+    /* This updates recent-ness for updating an existing id.
+       Takes out existing item. Inserts it into HEAD of LinkedList.
+       Only update when the id you're grabbing isn't already HEAD.
+    */
+    this.updateRecentExistingId = (id) => {
+        if (this.cache.head.id !== id) {
+            this.cache.append(this.cache.remove(this.lookup[id]))
+        }
+    };
+
+    /* Input: id
+       Output: val
+       Updates recentness for that id in cache.
+    */
+    this.get = (id) => {
+        // TODO get a non-existent id
+        console.log('\nGetting', id);
+        if (this.lookup[id]) {
+            this.updateRecentExistingId(id);
+            console.log(this.lookup[id].val);
+            return this.lookup[id].val;
+        }
+        console.log('ID did not exist');
+        return 'ID did not exist';
+    };
+
+    /* Input: id and val
+       Output: none
+       Updates recentness in cache.
+       If id is not in the list and the list is full, deletes
+       the least recently used id and then adds this one.
+    */
+    this.set = (id, val) => {
+        console.log('\nSetting', id, ',' , val);
+        if (this.lookup[id]) { // Setting existing id. Size of cache does not change.
+            this.updateRecentExistingId(id);
+            this.lookup[id].val = val;
+            this.cache.head.val = val;
+        } else { // Setting new id. Size of cache may change.
+            if (Object.keys(this.lookup).length === this.maxSize) {
+                let nodeToDelete = this.cache.tail;
+                this.cache.remove(nodeToDelete);
+                delete(this.lookup[nodeToDelete.id]);
+            }
+            // Add new Node
+            let newHeadNode = new Node(id, val);
+            this.cache.append(newHeadNode);
+            this.lookup[id] = newHeadNode;
+        }
+    };
+
+    // Deletes exisiting cache and creates a new one with size = maxSize
+    this.construct = (maxSize) => {
+        this.lookup = {};
+        this.cache = new LinkedList();
+        this.maxSize = maxSize;
+    };
+
+    this.printCache = () => {
+        let recent = []; // make a copy of cache in array form
+        let node = this.cache.head;
+        while (node !== null) {
+            recent.push(node.id);
+            node = node.next;
+        }
+        console.log(recent.join(', '), '<-- Cache, from MOST recently used to LEAST recently used');
+    };
+};
+
+// let lru1 = new LRUCache();
+// lru1.construct(4);
+// lru1.set('a', 1);
+// lru1.set('b', 1);
+// lru1.set('c', 1);
+// lru1.set('d', 1);
+// lru1.printCache();
+
+// lru1.get('a');
+// lru1.printCache();
+// console.log('a, d, c, b');
+
+// lru1.set('d', 2);
+// lru1.printCache();
+// console.log('d, a, c, b');
+
+// lru1.set('e', 3);
+// lru1.printCache();
+// console.log('e, d, a, c');
+
+// lru1.set('c', 4);
+// lru1.printCache();
+// console.log('c, e, d, a');
+
+
+// console.log('*********************************\n');
+
+let lru = new LRUCache();
+lru.construct(9);
+
+// Test1: Simple case works
+lru.set('a', 1);
+lru.set('b', 2);
+lru.set('c', 3);
+lru.set('d', 4);
+lru.set('e', 5);
+lru.set('f', 6);
+lru.set('g', 7);
+lru.set('h', 8);
+lru.set('i', 9);
+lru.printCache();
+console.log('i, h, g, f, e, d, c, b, a <-- Cache should be\n');
+
+// Test2: Setting works
+lru.set('j', 10);
+lru.printCache();
+console.log('j, i, h, g, f, e, d, c, b <-- Cache should be\n');
+
+
+// Test2.5: Setting again works
+lru.set('j', 100);
+lru.printCache();
+console.log('j, i, h, g, f, e, d, c, b <-- Cache should be\n');
+
+console.log('Getting j: ', lru.get('j'), 'should be 100');
+lru.printCache()
+console.log('j, i, h, g, f, e, d, c, b <-- Cache should be\n');
+
+// Test3: Overwriting works
+lru.set('overwrite b', 9);
+lru.printCache();
+console.log('overwrite b, j, i, h, g, f, e, d, c <-- Cache should be\n');
+
+lru.set('overwrite c', 90);
+lru.printCache();
+console.log('overwrite c, overwrite b, j, i, h, g, f, e, d <-- Cache should be\n');
+
+lru.set('overwrite d', 900);
+lru.printCache();
+console.log('overwrite d, overwrite c, overwrite b, j, i, h, g, f, e <-- Cache should be\n');
+
+// Test4: Getting should work.
+lru.get('f');
+lru.printCache();
+console.log('f, overwrite d, overwrite c, overwrite b, j, i, h, g, e <-- Cache should be\n');
+
+// Test5: Getting a bunch of times shouldn't clog up the cache
+lru.get('j');
+lru.get('j');
+lru.get('j');
+lru.get('j');
+lru.printCache();
+console.log('j, f, overwrite d, overwrite c, overwrite b, i, h, g, e <-- Cache should be\n');
+
+// Test5: Setting after a ton of gets should be fine...
+lru.set('potato', 123);
+lru.printCache();
+console.log('potato, j, f, overwrite d, overwrite c, overwrite b, i, h, g <-- Cache should be\n');
