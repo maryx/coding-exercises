@@ -1,0 +1,30 @@
+<div class='profile-container'>
+
+<a href='http://www.facebook.com'><img class='profile-photo' src='https://67.media.tumblr.com/c463a5464eef1e9c319988885dd87771/tumblr_oh5qimDAKH1rfj912o1_1280.jpg'></a>
+
+<a href='http://www.facebook.com/edit'><img class='edit' src='http://web-hub.net/wiki/skins/largepublisher/icon_edit_small.gif'></a>
+
+</div>
+
+
+.profile-container {
+  position: relative;
+  width: auto; // or hardcoded px
+  height: auto;
+}
+
+.profile-photo {
+  width: 100%;
+  height: 100%;
+}
+
+.profile-container .edit {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  display: none;
+}
+
+.profile-container:hover .edit {
+  display: block;.
+}
