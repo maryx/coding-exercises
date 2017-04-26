@@ -69,7 +69,7 @@ function tryFillKnapsack(cache, W, items){
 }
 
 function getValueOfItems(cache, items) {
-    let itemVals = null; //cache.get(items);
+    let itemVals = cache.get(items);
     // sum of item vals and weights already in cache
     if (itemVals) {
        return itemVals;
@@ -87,7 +87,7 @@ function getValueOfItems(cache, items) {
     }
 
     itemVals = {ids: ids, val: totalVal, weight: totalWeight};
-    cache.put(items, itemVals);
+    cache.put(ids, itemVals);
     return itemVals;
 }
 
@@ -96,6 +96,13 @@ function Cache() {
 
     // O(1)
     this.get = (items) => {
+        let ids = [];
+        items.forEach((item) => {
+            ids.push(item.id);
+        });
+        // console.log('getting items')
+        // console.log(ids)
+        // console.log(this.itemCombinations[ids]);
         return this.itemCombinations[items];
     };
 
@@ -113,6 +120,7 @@ let items = [
     { id: 5, val: 20, weight: 23 },
     { id: 6, val: 50, weight: 31 },
 ]
+console.log('\nTesting multiple smaller items get as close to target W as possible');
 console.log(fillKnapsack(W, items));
 
 items = [
@@ -123,16 +131,18 @@ items = [
     { id: 5, val: 20, weight: 23 },
     { id: 6, val: 50, weight: 31 },
 ]
+console.log('\nTesting 2 items with combined larger weight > 1 item with smaller weight');
 console.log(fillKnapsack(W, items));
 
 items = [
     { id: 1, val: 50, weight: 30 },
     { id: 2, val: 25, weight: 15 },
-    { id: 3, val: 26, weight: 16 },
+    { id: 3, val: 25, weight: 15 },
     { id: 4, val: 4, weight: 3 },
     { id: 5, val: 20, weight: 23 },
     { id: 6, val: 50, weight: 31 },
 ]
+console.log('\nTesting duplicates val:weights do not matter');
 console.log(fillKnapsack(W, items));
 
 items = [
@@ -143,4 +153,5 @@ items = [
     { id: 5, val: 20, weight: 23 },
     { id: 6, val: 50, weight: 30 },
 ]
+console.log('\nTesting duplicates val:weights do not matter');
 console.log(fillKnapsack(W, items));
